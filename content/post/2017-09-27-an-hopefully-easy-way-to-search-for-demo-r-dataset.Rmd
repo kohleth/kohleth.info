@@ -1,0 +1,23 @@
+---
+title: An (hopefully) easy way to find a dummy R dataset for your Stack Overflow / Cross Validated questions
+author: Kohleth Chia
+date: '2017-09-27'
+slug: an-hopefully-easy-way-to-search-for-demo-r-dataset
+categories: []
+tags: []
+---
+
+Have you ever wanted to ask an R question on stack overflow or Cross Validated, then realized you better provide a reproducible example? But of course you don't want to (or it is too much hassle to) publish your real dataset, so naturally you need to find a stock dataset that has the same features as the one you are using.
+
+Or how about a quick quiz? Can you quickly name a dataset that has at least 1 binary variable, 1 numeric variable, and 1 categorical variable with more than 2 levels?
+
+This is why I decided to build the following table which list some features of the stock dataset that ships with base R. I only included the dataframes and therefore excluding the time series for now. And when I have more time I can start adding datasets that come with other packages (like `ggplot2::diamonds`).
+
+The follow `DT::datatable` might not be the easiest to use but you can access the `.csv` on [github](//raw.githubusercontent.com/kohleth/R_DF_Attributes/master/R_DF_Attributes.csv) directly.
+```{r}
+DT::datatable(read.csv("https://raw.githubusercontent.com/kohleth/R_DF_Attributes/master/R_DF_Attributes.csv"),
+              filter="top",
+              options=list(scrollX=T))
+```
+
+The answer to my pop quiz is: `CO2`, `npk`, `sleep`, and `I will let you find it yourself`.

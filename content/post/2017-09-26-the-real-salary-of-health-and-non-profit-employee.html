@@ -1,0 +1,39 @@
+---
+title: The real salary of health and non-profit employee
+author: Kohleth Chia
+date: '2017-09-26'
+slug: the-real-salary-of-health-and-non-profit-employee
+categories: []
+tags: []
+---
+
+
+
+<p>In Australia, if you work in health or charity, you can salary package a certain amount of your pre-tax income.</p>
+<p>That is, you use that pre-tax income to pay for something else, so your total taxable income become less, and you end up earning more than your nominal salary.</p>
+<p>A question that comes to mind then is, what is my real salary figure?</p>
+<p>To answer this I wrote a little R program:</p>
+<pre><code>  tax=function(amount){
+    if(amount&lt;=18200)return(0)
+    if(amount&lt;=37000)return(0.19*(amount-18200))
+    if(amount&lt;=80000)return(3572+0.325*(amount-37000))
+    if(amount&lt;=180000)return(17547+0.37*(amount-80000))
+    54547+0.45*(amount-180000)
+  }
+
+  realPreTaxIncome=function(raw,sp=15900){
+    if(raw&lt;=0)return(0)
+    sp=as.numeric(sp)
+    aftersp_inc=raw-sp
+    after_sp_and_tax_inc=aftersp_inc-tax(aftersp_inc)
+    tot_after_tax_inc=after_sp_and_tax_inc+sp
+
+    matchfn=function(P){
+      abs(P-tax(P)-tot_after_tax_inc)
+    }
+    optimise(f=matchfn,interval=c(raw,raw+sp),tol=1e-5)$min
+  }</code></pre>
+<p>The <code>tax</code> function calculates the amount of income tax you have to pay if you earn <code>amount</code>, then <code>realPreTaxIncome</code> calculates your real pre-tax income. The argument <code>raw</code> is the nominal income, and <code>sp</code> is the amount of pre-tax income you are packaging. With health professionals, the cap is $9,010, while for charity it is $15,900 (until you incur some FBT). The last line uses the <code>optimise</code> function to solve for your real income. Strictly speaking, it can be solved analytically. But I just thought using a solver is easier to code. There will no doubt be numerical error, but the magnitude will be irrelevantly small.</p>
+<p>I have turn this into a little shiny app. Here you go!</p>
+<iframe src="https://kohleth.shinyapps.io/sp_calc/?showcase=0" width="672" height="400px">
+</iframe>

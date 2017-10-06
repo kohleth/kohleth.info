@@ -1,0 +1,17 @@
+---
+title: Multi-level drilldown with Highcharter
+author: Kohleth Chia
+date: '2017-09-30'
+slug: multi-level-drilldown-with-high-charter
+cover: /post_imgs/multilevelDrilldownHighCharter.png
+---
+
+[`Highcharter`](//jkunst.com/highcharter/) is an R package (a wrapper really) to the popular [highchart](//www.highcharts.com/) library. 
+
+What it allows you to do is great. The only problem I have so far is with the documentation on the R side. Since it is a wrapper, many of its documentation simply asks you to go check out the original `highchart` manual (the `js` library) and work out the corresponding R syntax. This isn't exactly useful to an R user. Instead, I found that it is often more useful to check out demo R script which does what you want.
+
+So here I include my own -- A multi-level drilldown chart. You can find the full R script on my [github](//github.com/kohleth/highcharterDrilldownDemo).
+
+```{r,warning=FALSE,message=FALSE}
+eval(parse(text = RCurl::getURL("https://raw.githubusercontent.com/kohleth/highcharterDrilldownDemo/master/demo.R", ssl.verifypeer = FALSE)))
+```

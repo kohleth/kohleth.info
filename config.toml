@@ -1,0 +1,42 @@
+theme = "hugo-nuo"
+baseURL = "/"
+languageCode = "en-us"
+title = "Kohleth Chia"
+relativeURLs = true
+publishDir = "public"
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+
+
+[params]
+    author = "Kohleth Chia"
+    dateFormat = "2006/01/02"
+    subtitle = "Statistician | Data Scientist"
+    location = "@ Melbourne"
+    avatar = "/img/fav/fav.png"
+
+    # MathJaxCDN = "//cdn.bootcss.com"
+    # MathJaxVersion = "2.7.1"
+    #
+    highlightjsVersion = "9.11.0"
+    highlightjsCDN = "//cdn.bootcss.com"
+    highlightjsLang = ["r", "yaml"]
+    highlightjsTheme = "github"
+
+    github  = "kohleth"
+    linkedin = "kohleth-chia-90282357"
+    researchgate = "Kohleth_Chia"
+
+    paginate = 10
+
+    comments = true
+    hashover = true
+    # changyan = true
+
+[permalinks]
+    post = "/:year/:month/:day/:slug/"
+
+
+[[menu.main]]
+  name = "Blog"
+  identifier = "home"
+  url = "/"

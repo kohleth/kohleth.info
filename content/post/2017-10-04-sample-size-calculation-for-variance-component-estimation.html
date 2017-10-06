@@ -1,0 +1,3241 @@
+---
+title: Sample size calculation for variance component estimation
+author: Kohleth Chia
+date: '2017-10-04'
+slug: sample-size-calculation-for-variance-component-estimation
+categories: []
+tags: []
+cover: /post_imgs/sampleSizeVcomp.png
+---
+
+
+
+<p>Some time ago my boss came to me with a rather uncommon sample size calculation question. The situation is as such:</p>
+<p>My boss and his group of engineers are investigating their own variability / repeatability in a common task that they would perform everyday. This task involves them taking / making certain measurements of a human subject on both sides (left &amp; right). So they have found 23 subjects, and two engineers have already taken / made the measurements with 2 replicates each. So ideally this would be 23 subjects X 2 sides X 2 engineers X 2 reps = 184 measurements. But in reality, certain engineer-subject combination did not happen, so it was an imbalanced design with 180 measurements only.</p>
+<p>So far, this is nothing but a simple linear mixed model exercise, with the inter- and intra- engineer (assessor) variability being the statistics of interest.</p>
+<p>But now comes the interesting part. My boss was the third engineer who needed to do those measurements. But he was a busy person, and he was also the manager of that group of engineers. i.e. He had a bit of power. So naturally he asked the question, ‘do I need to examine all 23 subjects?’</p>
+<p>Ok, in my statistical view, the question is then what is the minimal number of subjects my boss would need to examine? Obviously, we need some sort of stopping criterion. I knew this must have something to do with the precision of the estimated variance component, but I didn’t know what exactly our target should be. So let’s just do some simulation and see what we get.</p>
+<p>Knowing that estimated variance components are <a href="//bbolker.github.io/mixedmodels-misc/glmmFAQ.html#standard-errors-of-variance-estimates" target="_blank" rel="noopener noreferrer">rarely symmetrically distributed</a>, I decided to use the width of their 95% parametric bootstrap C.I. as a measure of uncertainty (precision).</p>
+<p>And bootstrap turns out to be particularly suitable here, because in the bootstrap world (i.e. my resamples) I can add synthetic data which represent the hypothetical measurements my boss would take. So the procedure is clear now, I just keep adding synthetic data and compute the bootstrap C.I. width, then eventually we will get a curve of C.I. width against number of extra measurements taken, which will then inform our sample size decision.</p>
+<p>I have anonymize the data so you can have a look.</p>
+<pre><code>## Warning: package &#39;kableExtra&#39; was built under R version 3.2.5</code></pre>
+<div style="border: 1px solid #ddd; padding: 5px; overflow-y: scroll; height:200px; overflow-x: scroll; width:500px; ">
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Subject
+</th>
+<th style="text-align:left;">
+Side
+</th>
+<th style="text-align:left;">
+Assessor
+</th>
+<th style="text-align:right;">
+Rep
+</th>
+<th style="text-align:right;">
+Y
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+10.83209
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+21.27773
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+30.01348
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+31.77060
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+31.38078
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+23.56794
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+18.50375
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.07136
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+34.52524
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+36.94905
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+30.45007
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+41.57258
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+43.03429
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+44.91257
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+29.29627
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+27.04483
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+40.06927
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+46.73233
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+15.90020
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.97727
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+35.48381
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+42.24831
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+40.15427
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+41.66797
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.10099
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.02091
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+27.37854
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+28.24154
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+31.71051
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+37.70472
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+47.68345
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+47.71817
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+30.46686
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+34.81232
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+47.55071
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+48.18125
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+24.84646
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+28.14988
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+40.88104
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+41.50013
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+46.29005
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+47.19234
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+50.18593
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+53.39590
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+63.95705
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+59.30349
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+10.61745
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+21.27055
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+32.66499
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+32.19034
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+32.20094
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+23.52212
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+22.95720
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+21.69590
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+31.86560
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+39.10052
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+26.81338
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+43.41162
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.03783
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+45.40097
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+33.08411
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+20.91626
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+40.65933
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+46.01888
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+23.87411
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+31.85502
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+42.07041
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+41.22127
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.42598
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+40.72574
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+25.10099
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+25.02091
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+26.15263
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+29.43338
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+31.71051
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+36.40542
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.20324
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+45.61790
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+30.18601
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+29.44907
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+43.31391
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+46.91129
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+41.01079
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+42.24693
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.18807
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+45.47454
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+42.66973
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.61217
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.83013
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.34676
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+62.97700
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A1
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+54.51102
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+12.89996
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.07832
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+30.94170
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+34.85295
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.13995
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+20.97606
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.78032
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+23.80819
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+31.07500
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+31.84122
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+29.40163
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+45.02737
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+45.38743
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+41.28658
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+28.41263
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+22.28931
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+22.56897
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+23.39325
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+34.09871
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+41.89823
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+41.42764
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+41.61760
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+27.16325
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+25.38893
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+26.69957
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+27.47250
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+32.42801
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+29.18174
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+42.68415
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+47.21881
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+28.98995
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+29.70128
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+44.10217
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+47.78519
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+35.74788
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+44.69316
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+42.53858
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+45.74719
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+44.57760
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+47.18696
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+45.84427
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+45.32344
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+61.70546
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+61.28267
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+14.01887
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S1
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+20.33115
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+28.34032
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S2
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+34.20101
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+29.49525
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S3
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+23.02746
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+20.20879
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S4
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+22.88934
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+24.60163
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S5
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+30.14033
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+32.37678
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S6
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.95350
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+48.29321
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S7
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+40.99039
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+29.55419
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S8
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+27.08848
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S9
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+17.93966
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S10
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+22.38175
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+32.22720
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S11
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+30.74638
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+39.74959
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S12
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+37.95796
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+27.18784
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S13
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+24.92858
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+30.34409
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S14
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+27.42067
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+37.17448
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S15
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+34.45778
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+38.96834
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S16
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+48.10080
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+28.60280
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S17
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+32.04891
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+44.30297
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S18
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+40.70102
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+37.73070
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S19
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+36.01808
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+43.50118
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S20
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+42.70778
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+38.98179
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S21
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+38.66285
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+49.61803
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S22
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+53.38497
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Left
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+57.59231
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+S23
+</td>
+<td style="text-align:left;">
+Right
+</td>
+<td style="text-align:left;">
+A2
+</td>
+<td style="text-align:right;">
+2
+</td>
+<td style="text-align:right;">
+56.62428
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Let’s load some libraries.</p>
+<pre class="r"><code>library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(lme4)
+B=1000 ## number of bootstrap resample</code></pre>
+<p>The next step is to fit a mixed model to the existing data generated by the two engineers.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> I also computed the confidence interval of the inter-assessor variance component to get an idea of the variability.</p>
+<pre class="r"><code>lmm=lmer(Y~1+(1|Subject/Side)+(1|Assessor)+(1|Subject:Assessor),data=dummy)
+confint0=confint(lmm,method=&quot;boot&quot;,oldNames=FALSE,nsim=B,use.u=TRUE)
+confint0[&quot;sd_(Intercept)|Assessor&quot;,]</code></pre>
+<pre><code>##     2.5 %    97.5 % 
+## 0.0000000 0.9792139</code></pre>
+<p>Next, I set up the parametric bootstrap. Usually, bootstrap procedure resample to the same size as the original dataset. But this time, I actually need to over-resample to incorporate the synthetic data. Note that in parametric bootstrap the response variable of the synthetic data is irrelevant, which is fantastic as that is what I do not have!</p>
+<pre class="r"><code>X0=model.frame(lmm) ## original model frame
+nsList=seq(1,length(unique(dummy$Subject)),by=3)  ## test point
+set.seed(123)
+## parametric bootstrap
+res=lapply(nsList,function(ns){
+  bossX=subset(X0,Assessor==&quot;A1&quot;&amp;as.numeric(Subject)&lt;=ns)%&gt;%
+    mutate(Assessor=&quot;Boss&quot;,Y=NA) ## Y=NA: synthetic data is hypothetical, no real measurments were taken.
+  X1=X0%&gt;%bind_rows(bossX)  ## append new rows (synthetic data) from Boss&#39;s hypothetical assessment
+  simY=simulate(lmm,use.u=TRUE,newdata=X1,allow.new.levels=TRUE,nsim=B) ## simulate response variable
+  lmeri=lmer(simY[,1]~1+(1|Subject/Side)+(1|Assessor)+(1|Subject:Assessor),data=X1) ## fit the model once, so I can use `refit` below.
+  boot=sapply(1:B,function(j){
+    mod=refit(lmeri,newresp=simY[,j]) ## refit the model with new simulated response
+    intra=sigma(mod) ## intra-assessor standard deviation
+    inter=attr(VarCorr(mod)$Assessor,&quot;stddev&quot;) ## inter-assessor standard deviation
+    c(intra=intra,inter=inter)
+  })
+})</code></pre>
+<p>After the bootstrap resample I simply use the percentile method to calculate the 95% C.I. width.</p>
+<pre class="r"><code>bres=sapply(res,function(r){
+  apply(r,1,quantile,p=c(0.025,0.975))%&gt;%
+    apply(2,diff)  # diff turns the C.I. into width.
+}) </code></pre>
+<p>Finally, let’s plot it.</p>
+<pre class="r"><code>data_frame(nSubject=nsList)%&gt;%
+  cbind(t(bres))%&gt;%
+  setNames(c(&quot;nSubject&quot;,&quot;intra&quot;,&quot;inter&quot;))%&gt;%
+  gather(var,CI.width,-nSubject)%&gt;%
+  ggplot(aes(x=nSubject,y=CI.width,col=var))+
+  geom_line()+
+  geom_point()+
+  geom_hline(yintercept = diff(confint0[&quot;sd_(Intercept)|Assessor&quot;,]),lty=2,col=&quot;#F8766D&quot;)+
+  geom_hline(yintercept = diff(confint0[&quot;sigma&quot;,]),lty=2,col=&quot;#00BFC4&quot;)+
+  expand_limits(y=0)+
+  scale_x_continuous(breaks = seq(0,23,by=2))+
+  annotate(&quot;text&quot;,4,1.1,label=&quot;inter-Assessor&quot;,col=&quot;#F8766D&quot;)+
+  annotate(&quot;text&quot;,3,0.6,label=&quot;intra-Assessor&quot;,col=&quot;#00BFC4&quot;)+
+  theme(legend.position = &quot;none&quot;)+
+  labs(title=&quot;95% C.I. width vs. number of subjects assessed by my Boss&quot;)</code></pre>
+<p><img src="/post/2017-10-04-sample-size-calculation-for-variance-component-estimation_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>The two dotted lines are the current width of the respective confidence interval. We can observe from the graph that if my boss examine at least 4 subjects, the width of the confidence interval of the estimated variance component will be about the same as the current one. But of course, we need to be a bit conservative about this because, at least, the simulation is done conditionally on the estimated parameters, so in reality we will probably get more variability (thus wider confidence interval).</p>
+<div id="final-remarks" class="section level2">
+<h2>Final Remarks</h2>
+<ol style="list-style-type: decimal">
+<li>This is a slightly unusual sample size calculation request because usually, the objective is to accurately estimate some real treatment effect, rather than variance components.</li>
+<li>Parametric bootstrap is surprisingly useful here because i) it allows us to over-sample as much data point as we like, to account for the hypothetical extra assessment that would be done by my boss. ii) it does not require us to know the response variable of the synthetic data which is just what we needed.</li>
+<li>I think technically I can solve this algebraically using information matrices. But bootstrap (and simulation in general) is just much easier.</li>
+</ol>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Two things to explain about the fitted model. 1. Strictly speaking we should add the term <code>(1|Subject:Assessor:Side)</code> into the model. I did that, but it wasn’t returning any positive variance component estimate, so I just removed it from the model (which is the same as lump it together with the residual term). 2. I used <code>use.u=TRUE</code> in the model which forces it to <em>not</em> re-estimate (or re-predict) the random Assessor effect (the BLUPs) for the 2 engineers who already did their assessment. I think this is the correct choice because in reality, their BLUPs will not be re-estimated/re-predicted.<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>

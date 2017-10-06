@@ -1,0 +1,70 @@
+---
+title: Visualizing predicted probability of a binary outcome
+author: Kohleth Chia
+date: '2017-09-25'
+slug: visualizing-predicted-probabilty-of-a-binary-outcome
+description: Sometimes we need to plot the predicted probability of a binary outcome. For example, using the famous iris data set...
+categories: []
+tags: []
+draft: false
+cover: /post_imgs/predictedProbBinaryOutcome.png
+---
+
+Sometimes we need to plot the predicted probability of a binary outcome. For example, using the famous iris data set, we might fit a logistic regression to predict whether the species of the flower is Setosa or not.
+
+```{r, message=FALSE,warning=FALSE}
+library(ggplot2)
+library(dplyr)
+X=iris%>%
+  mutate(Y=Species=="setosa",
+         prob=predict(glm(Y~Sepal.Length,
+                          data=iris,
+                          family="binomial"),
+                      type="response"),
+         id=factor(1:n()))%>%
+  slice(c(1,15,17))  # a high, low, mid predicted prob.
+X%>%select(id,prob)
+```
+The fact that the predicted probability is just a vector of non-negative numbers makes it tempting to use a dotplot or barchart to display them.
+ 
+```{r,message=FALSE,warning=FALSE,fig.height=2}
+ggplot(X,aes(x=id,y=prob))+
+  geom_col(fill="#00BFC4")+
+  coord_flip()+
+  lims(y=c(0,1))+
+  labs(title="Predicted Probability of Setosa")+
+  theme(axis.title.y = element_text(angle=0))
+```
+
+This plot looks innocent enough. But then I realize there are 2 things that could be potentially misleading.
+
+1. It makes the bar looks like certainty instead of likelihood. That is, it looks like we are moderately to strongly confident/certain about our prediction for id=1, but less so for id=15. However, we are actually quite confident that id=15 indicates the species is *not* Setosa (even though it turns out to be wrong). So, both a high and low predicted probability actually indicate we are quite confident/certain in our prediction.
+2. It tends to make any mid range probability look substantial, in the presence of other small probability values. See the top row (id=17) for example. This is bad because midrange probabilities are actually the uncertain ones.
+
+## Alternative
+I think both issues will go away if we also plot the predicted probability of the complementary class (i.e. the negative case). 
+
+```{r, message=FALSE, warning=FALSE,fig.height=2}
+X%>%
+  mutate(Setosa=prob,
+         `Not Setosa`=1-prob)%>%
+  tidyr::gather(outcome,p,Setosa, `Not Setosa`)%>%
+  ggplot(aes(x=id,y=p,fill=outcome))+
+  geom_col()+coord_flip()+
+  theme(axis.title.y = element_text(angle=0))
+```
+
+And of course it will be even better if we annotate the graph.
+```{r, message=FALSE, warning=FALSE,echo=FALSE,fig.height=2}
+X%>%
+  mutate(Setosa=prob,
+         `Not Setosa`=1-prob)%>%
+  tidyr::gather(outcome,p,Setosa, `Not Setosa`)%>%
+  mutate(ny=ifelse(outcome=="Setosa",p-0.05,(1-p)+0.05))%>%
+  ggplot(aes(x=id,y=p,fill=outcome,label=paste0(round(p*100),"%")))+geom_col()+
+  coord_flip()+geom_text(aes(y=ny))+
+  theme(axis.title.y = element_text(angle=0))
+```
+Now it is a lot more clearer that the top row is quite uncertain, while the bottom two are quite certain in their own prediction.
+
+And <a href="//projects.fivethirtyeight.com/2016-election-forecast/" target="_blank">this</a> would be a great example of such plot.

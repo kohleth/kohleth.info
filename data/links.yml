@@ -1,0 +1,17 @@
+01_checkymsolar:
+  title: CheckMySolar
+  link: //www.kohleth.info/checkmysolar
+  avatar: /img/checkmysolar.png
+  description: Check and compare your PV system's performance (in VIC)
+
+02_FBT:
+  title: Real Salary Calculator
+  link: /2017/09/26/the-real-salary-of-health-and-non-profit-employee/
+  avatar: /img/fbt.png
+  description: For health & charity employee
+
+03_Rdataset:
+  title: Dummy R dataset
+  link: /2017/09/27/an-hopefully-easy-way-to-search-for-demo-r-dataset/
+  avatar: /img/findDF.png
+  description: For your SO/CV questions

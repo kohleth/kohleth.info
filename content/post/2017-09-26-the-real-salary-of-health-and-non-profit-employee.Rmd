@@ -1,0 +1,49 @@
+---
+title: The real salary of health and non-profit employee
+author: Kohleth Chia
+date: '2017-09-26'
+slug: the-real-salary-of-health-and-non-profit-employee
+categories: []
+tags: []
+---
+
+
+In Australia, if you work in health or charity, you can salary package a certain amount of your pre-tax income.
+
+That is, you use that pre-tax income to pay for something else, so your total taxable income become less, and you end up earning more than your nominal salary.
+
+A question that comes to mind then is, what is my real salary figure?
+
+To answer this I wrote a little R program:
+
+```
+  tax=function(amount){
+    if(amount<=18200)return(0)
+    if(amount<=37000)return(0.19*(amount-18200))
+    if(amount<=80000)return(3572+0.325*(amount-37000))
+    if(amount<=180000)return(17547+0.37*(amount-80000))
+    54547+0.45*(amount-180000)
+  }
+
+  realPreTaxIncome=function(raw,sp=15900){
+    if(raw<=0)return(0)
+    sp=as.numeric(sp)
+    aftersp_inc=raw-sp
+    after_sp_and_tax_inc=aftersp_inc-tax(aftersp_inc)
+    tot_after_tax_inc=after_sp_and_tax_inc+sp
+
+    matchfn=function(P){
+      abs(P-tax(P)-tot_after_tax_inc)
+    }
+    optimise(f=matchfn,interval=c(raw,raw+sp),tol=1e-5)$min
+  }
+```
+
+The `tax` function calculates the amount of income tax you have to pay if you earn `amount`, then `realPreTaxIncome` calculates your real pre-tax income. The argument `raw` is the nominal income, and `sp` is the amount of pre-tax income you are packaging. With health professionals, the cap is $9,010, while for charity it is $15,900 (until you incur some FBT).
+The last line uses the `optimise` function to solve for your real income. Strictly speaking, it can be solved analytically. But I just thought using a solver is easier to code. There will no doubt be numerical error, but the magnitude will be irrelevantly small.
+
+I have turn this into a little shiny app. Here you go!
+
+```{r,message=FALSE,echo=FALSE,warning=FALSE}
+knitr::include_app("https://kohleth.shinyapps.io/sp_calc/")
+```
