@@ -1,11 +1,11 @@
 theme = "hugo-nuo"
-baseURL = "/"
+baseURL = "http://www.kohleth.info/"
 languageCode = "en-us"
 title = "Kohleth Chia"
-relativeURLs = true
+relativeURLs = false
 publishDir = "public"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
-
+canonifyurls = true
 
 [params]
     author = "Kohleth Chia"
