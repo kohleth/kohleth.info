@@ -1,4 +1,5 @@
 <header class="site-header">
+  <meta name="specificfeeds-verification-code" content="8G2kyB67Udg5epPFRjvv"/>
   <img class="avatar" src="{{ .Site.Params.avatar }}" alt="Avatar">
   {{  if eq .Kind "home" }}
   <h1 class="title">{{ .Site.Title }}</h1>
@@ -114,6 +115,11 @@
       <li class="social-item">
         <a href="/index.xml"><span class="icon icon-rss" title="RSS" target="_blank"></span></a>
       </li>
+
+      <li class="social-item">
+        <a href="//feeds.feedburner.com/RBloggers" target="_blank"><span class="icon" title="RBlogger">R<sup>b</sup></span></a>
+      </li>
+
 
     </ul>
   </nav>
