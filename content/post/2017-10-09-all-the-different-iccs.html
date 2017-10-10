@@ -1,0 +1,260 @@
+---
+title: All the different ICCs
+author: Kohleth Chia
+date: '2017-10-09'
+slug: all-the-different-iccs
+description: How many types of ICC do you know? I tried to re-derive all of them from the estimated variance components of a linear mixed model.
+categories: []
+tags: []
+draft: true
+---
+
+
+
+<p>I recently came across <a href=//www.aliquote.org/cours/2012_biomed/biblio/Shrout1979.pdf target="_blank">Shrout and Fleiss (1979)</a> which described 6 different kinds of Intra-Class-Correlation (ICC): ICC(1), ICC(2), ICC(3), ICC(1,k), ICC(2,k), ICC(3,k).<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
+<p>Turns out, the <code>pysch</code> package has the function <code>ICC</code> which calculates all this for you. It even gives you p-value and lower/upper boud. Pretty handy (if you know what you are doing).</p>
+<pre class="r"><code>&gt; ## their demo. see ?psych::ICC
+&gt; library(psych)
+&gt; sf &lt;- matrix(c(9,    2,   5,    8,
++                6,    1,   3,    2,
++                8,    4,   6,    8,
++                7,    1,   2,    6,
++                10,   5,   6,    9,
++                6,   2,   4,    7),ncol=4,byrow=TRUE)
+&gt; colnames(sf) &lt;- paste(&quot;J&quot;,1:4,sep=&quot;&quot;)
+&gt; rownames(sf) &lt;- paste(&quot;S&quot;,1:6,sep=&quot;&quot;)
+&gt; sf  #example from Shrout and Fleiss (1979)
+##    J1 J2 J3 J4
+## S1  9  2  5  8
+## S2  6  1  3  2
+## S3  8  4  6  8
+## S4  7  1  2  6
+## S5 10  5  6  9
+## S6  6  2  4  7
+&gt; ICC(sf)
+## Call: ICC(x = sf)
+## 
+## Intraclass correlation coefficients 
+##                          type  ICC    F df1 df2       p lower bound
+## Single_raters_absolute   ICC1 0.17  1.8   5  18 0.16477      -0.133
+## Single_random_raters     ICC2 0.29 11.0   5  15 0.00013       0.019
+## Single_fixed_raters      ICC3 0.71 11.0   5  15 0.00013       0.342
+## Average_raters_absolute ICC1k 0.44  1.8   5  18 0.16477      -0.884
+## Average_random_raters   ICC2k 0.62 11.0   5  15 0.00013       0.071
+## Average_fixed_raters    ICC3k 0.91 11.0   5  15 0.00013       0.676
+##                         upper bound
+## Single_raters_absolute         0.72
+## Single_random_raters           0.76
+## Single_fixed_raters            0.95
+## Average_raters_absolute        0.91
+## Average_random_raters          0.93
+## Average_fixed_raters           0.99
+## 
+##  Number of subjects = 6     Number of Judges =  4</code></pre>
+<p>Usually, if I want an ICC, I would calculate it manually from the estimated variance components of a linear (mixed) model. So let's see if I can get my calculation to match it.</p>
+<div id="icc1" class="section level2">
+<h2>ICC(1)</h2>
+<p>From the description in the help file <code>?psych::ICC</code>,</p>
+<blockquote>
+<p>Each target is rated by a different judge and the judges are selected at random. (This is a one-way ANOVA fixed effects model and is found by (MSB- MSW)/(MSB+ (nr-1)*MSW))</p>
+</blockquote>
+<p>So the variation between judges is lumped together with that of the error term. That implies the model</p>
+<p><span class="math display">\[ s_{ij}=subject_i+e_{ij}\]</span> where $s_{ij}$ is the score of subject $i$ given by judge $j$. In here and the following, unless stated otherwise, we assume all terms are random. While this is different to the ‘fixed effects model’ stated in the description, I believe for balanced design the calculation involving variance components will be the same, and for unbalanced design the ANOVA approach wouldn’t work anyway.</p>
+<p>Therefore, for ICC(1), we get <span class="math display">\[ 
+\begin{align}
+corr(s_{ij},s_{ij&#39;})&amp;=\frac{var(s_{ij})+var(s_{ij&#39;})-var(s_{ij}-s_{ij&#39;})}{2var(s_{ij})}\\
+&amp;=\sigma^2_{subject}/(\sigma^2_{subject}+\sigma^2_e)
+\end{align}
+\]</span></p>
+<div id="icc2" class="section level3">
+<h3>ICC(2)</h3>
+<blockquote>
+<p>A random sample of k judges rate each target. The measure is one of absolute agreement in the ratings. Found as (MSB- MSE)/(MSB + (nr-1)<em>MSE + nr</em>(MSJ-MSE)/nc).</p>
+</blockquote>
+<p>This assumes the model <span class="math display">\[ s_{ij}=subject_i+judge_j+e_ij\]</span>.</p>
+<p>And leads to ICC(2) being <span class="math display">\[
+\begin{align}
+corr(s_{ij},s_{ij&#39;})=\sigma^2_{subject}/(\sigma^2_{subject}+\sigma^2_{judge}+\sigma^2_e)
+\end{align}
+\]</span></p>
+</div>
+<div id="icc3" class="section level3">
+<h3>ICC(3)</h3>
+<blockquote>
+<p>A fixed set of k judges rate each target. There is no generalization to a larger population of judges. (MSB - MSE)/(MSB+ (nr-1)*MSE).</p>
+</blockquote>
+<p>This assumes the model <span class="math display">\[ s_{ij}=subject_i+judge&#39;_j+e_ij\]</span> where $judge’_j$ is a fixed effect term.</p>
+<p>So ICC(3) is <span class="math display">\[
+corr(s_{ij},s_{ij&#39;})=\sigma^2_{subject}/(\sigma^2_{subject}+\sigma^2_e)
+\]</span></p>
+<p>Although the above formula is the same as that for ICC(1), the fact that $judge’_j$ is accounted for in the model means the calculated ICC will be different.</p>
+</div>
+<div id="icc.k" class="section level3">
+<h3>ICC(.,k)</h3>
+<p>According to the description,</p>
+<blockquote>
+<p>Then, for each of these cases, is reliability to be estimated for a single rating or for the average of k ratings? (The 1 rating case is equivalent to the average intercorrelation, the k rating case to the Spearman Brown adjusted reliability.)</p>
+</blockquote>
+<p>So, the assumed model stays the same as before. But the correlation is calculated based on the rater-averaged variable.</p>
+</div>
+<div id="icc1k" class="section level3">
+<h3>ICC(1,k)</h3>
+<p>Let’s first calculate the building blocks. <span class="math display">\[
+\begin{align}
+s_{i.}&amp;=subject_i+e_i. \\
+&amp;=subject_i+\sum_j e_{ij}/J
+\end{align}
+\]</span></p>
+<p><span class="math display">\[var(s_{i.})=\sigma_{subject}+\sigma^2_e/J\]</span> <span class="math display">\[s_{i.}-s_{i.&#39;}=\sum_j e_{ij}/J-\sum_{j&#39;} e_{ij&#39;}/J&#39;\]</span> <span class="math display">\[var(s_{i.}-s_{i.&#39;})=2\sigma^2_e/J\]</span> So, ICC(1,k) equals <span class="math display">\[
+\begin{align}
+corr(s_{i.},s_{i.&#39;})&amp;=\frac{var(s_{i.})+var(s_{i.&#39;})-var(s_{i.}-s_{i.&#39;})}{2var(s_{i.})}\\
+&amp;=\frac{\sigma^2_{subject}}{\sigma^2_{subject}+\sigma^2_e/J}
+\end{align}
+\]</span></p>
+</div>
+<div id="icc2k" class="section level3">
+<h3>ICC(2,k)</h3>
+<p>Similar derivation with model <span class="math display">\[s_i.=subject_i+\sum_j judge_j/J+\sum_j e_{ij}/J\]</span> leads to <span class="math display">\[
+\begin{align}
+corr(s_{i.},s_{i.&#39;})&amp;=\frac{\sigma^2_{subject}}{\sigma^2_{subject}+\sigma^2_{judge}/J+\sigma^2_e/J}
+\end{align}
+\]</span></p>
+</div>
+<div id="icc3k" class="section level3">
+<h3>ICC(3,k)</h3>
+<p>Finally, ICC(3,k) is <span class="math display">\[
+\begin{align}
+corr(s_{i.},s_{i.&#39;})=\frac{\sigma^2_{subject}}{\sigma^2_{subject}+\sigma^2_e/J}
+\end{align}
+\]</span></p>
+<p>which, again, despite the same form as ICC(1,k), the fact that $\sum_j judge_j/J$ is accounted for in the model would make the answer different.</p>
+</div>
+</div>
+<div id="r-implementation" class="section level2">
+<h2>R implementation</h2>
+<pre class="r"><code>&gt; ## turn sf into a &#39;tidy&#39; dataframe
+&gt; library(dplyr);library(tidyr);library(tibble);library(lme4)
+&gt; sfDF=sf%&gt;%
++   as.data.frame%&gt;%
++   rownames_to_column(&quot;subject&quot;)%&gt;%
++   gather(judge,score,J1:J4)</code></pre>
+<pre class="r"><code>&gt; ICC_lmm=function(dat){
++   m1=lmer(score~(1|subject),data=dat)
++   m2=lmer(score~(1|subject)+(1|judge),data=dat)
++   m3=lmer(score~(1|subject)+judge,data=dat)
++ 
++   
++   ICC1=function(mod){
++     v=as.data.frame(VarCorr(mod))
++     v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]/sum(v[,&quot;vcov&quot;])
++   }
++   
++   ICC2=function(mod){
++     v=as.data.frame(VarCorr(mod))
++     v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]/sum(v[,&quot;vcov&quot;])
++   }
++   
++   ICC3=function(mod){
++     v=as.data.frame(VarCorr(mod))
++     v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]/sum(v[,&quot;vcov&quot;])
++   }
++   
++   J=length(unique(dat$judge))
++   
++   ICC1k=function(mod){
++     v=as.data.frame(VarCorr(mod))
++     v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]/(v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]+v[v$grp==&quot;Residual&quot;,&quot;vcov&quot;]/J) 
++   }
++   
++   ICC2k=function(mod){
++     v=as.data.frame(VarCorr(mod))
++     v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]/(v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]+sum(v[v$grp!=&quot;subject&quot;,&quot;vcov&quot;])/J)
++   }
++   
++ 
++   ICC3k=function(mod){
++     v=as.data.frame(VarCorr(mod))
++     v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]/(v[v$grp==&quot;subject&quot;,&quot;vcov&quot;]+v[v$grp==&quot;Residual&quot;,&quot;vcov&quot;]/J)
++   }
++ 
++   
++   ICCs=c(ICC1=ICC1(m1),ICC2=ICC2(m2),ICC3=ICC3(m3),ICC1k=ICC1k(m1),ICC2k=ICC2k(m2),ICC3k=ICC3k(m3))
++   
++   B=500
++   ICCsCI=list(ICC1=bootMer(m1,ICC1,nsim = B),
++               ICC2=bootMer(m2,ICC2,nsim = B),
++               ICC3=bootMer(m3,ICC3,nsim = B),
++               ICC1k=bootMer(m1,ICC1k,nsim = B),
++               ICC2k=bootMer(m2,ICC2k,nsim = B),
++               ICC3k=bootMer(m3,ICC3k,nsim = B))%&gt;%
++     lapply(function(b)boot::boot.ci(b,type=&quot;perc&quot;)$percent[4:5])%&gt;%
++     bind_rows()
++     
++   out=ICCs%&gt;%bind_rows(ICCsCI)%&gt;%t
++     
++   colnames(out)=c(&quot;val&quot;,&quot;lower&quot;,&quot;upper&quot;)
++   out
++    
++ }</code></pre>
+<pre class="r"><code>&gt; ICC_lmm(sfDF)
+##             val      lower     upper
+## ICC1  0.1657418 0.00000000 0.5681087
+## ICC2  0.2897638 0.03462827 0.7429579
+## ICC3  0.7148407 0.24007521 0.9207491
+## ICC1k 0.4427971 0.00000000 0.8376224
+## ICC2k 0.6200505 0.09776280 0.9137302
+## ICC3k 0.9093155 0.41740743 0.9789497</code></pre>
+<p>The point estimate matches with the output of <code>psych::ICC</code> but our intervals are a bit different. This is expected as I <code>psych::ICC</code> uses the F-distribution, whereas in <code>ICC_lmm</code> I used percentile bootstrap C.I.</p>
+<p>One benefit of using a linear mixed model is that it can handle imbalanced design.</p>
+<p>So suppose we delete one observation,</p>
+<pre class="r"><code>&gt; sf_imb=sf
+&gt; sf_imb[3,3]=NA
+&gt; sf_imb
+##    J1 J2 J3 J4
+## S1  9  2  5  8
+## S2  6  1  3  2
+## S3  8  4 NA  8
+## S4  7  1  2  6
+## S5 10  5  6  9
+## S6  6  2  4  7</code></pre>
+<pre class="r"><code>&gt; tryCatch(psych::ICC(sf_imb)) ## fails
+## Error in psych::ICC(sf_imb): missing data were found for 1 cases 
+##  Try again with na.omit  or set missing= FALSE and proceed at your own risk.</code></pre>
+<p>There is an argument <code>missing=FALSE</code> in <code>psych::ICC</code>, but if you inspect the inner code, the <code>aov</code> function will warning against an unbalanced design.</p>
+<pre class="r"><code>&gt; psych::ICC(sf_imb,missing=FALSE) 
+## Call: psych::ICC(x = sf_imb, missing = FALSE)
+## 
+## Intraclass correlation coefficients 
+##                          type  ICC    F df1 df2       p lower bound
+## Single_raters_absolute   ICC1 0.15  1.7   5  18 0.18699      -0.143
+## Single_random_raters     ICC2 0.29 10.5   5  15 0.00018       0.018
+## Single_fixed_raters      ICC3 0.70 10.5   5  15 0.00018       0.326
+## Average_raters_absolute ICC1k 0.41  1.7   5  18 0.18699      -0.996
+## Average_random_raters   ICC2k 0.62 10.5   5  15 0.00018       0.068
+## Average_fixed_raters    ICC3k 0.90 10.5   5  15 0.00018       0.659
+##                         upper bound
+## Single_raters_absolute         0.71
+## Single_random_raters           0.76
+## Single_fixed_raters            0.94
+## Average_raters_absolute        0.91
+## Average_random_raters          0.93
+## Average_fixed_raters           0.99
+## 
+##  Number of subjects = 6     Number of Judges =  4</code></pre>
+<p><code>ICC_lmm</code> works as usual.</p>
+<pre class="r"><code>&gt; sfDF_imb=sfDF%&gt;%filter(!(subject==&quot;S3&quot;&amp;judge==&quot;J3&quot;))
+&gt; ICC_lmm(sfDF_imb) 
+##             val      lower     upper
+## ICC1  0.1554871 0.00000000 0.5782374
+## ICC2  0.2779546 0.03279919 0.7611254
+## ICC3  0.6975872 0.10183619 0.9166130
+## ICC1k 0.4241152 0.00000000 0.8367815
+## ICC2k 0.6062710 0.05876310 0.9254923
+## ICC3k 0.9022192 0.50751440 0.9806456</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>this naming is as <del>un</del>informative as the type-X ANOVA naming– if you have been working with this, you will know it by heart. But for others, it doesn't really mean much.<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>

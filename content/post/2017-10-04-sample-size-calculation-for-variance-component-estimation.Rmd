@@ -7,6 +7,9 @@ categories: []
 tags: []
 cover: /post_imgs/sampleSizeVcomp.png
 ---
+```{r,include=FALSE}
+knitr::opts_chunk$set(warning=FALSE,message=FALSE,collapse=TRUE,echo=TRUE,prompt=TRUE)
+```
 Some time ago my boss came to me with a rather uncommon sample size calculation question. The situation is as such:
 
 My boss and his group of engineers are investigating their own variability / repeatability in a common task that they would perform everyday. This task involves them taking / making certain measurements of a human subject on both sides (left & right). So they have found 23 subjects, and two engineers have already taken / made the measurements with 2 replicates each. So ideally this would be 23 subjects X 2 sides X 2 engineers X 2 reps = 184 measurements. But in reality, certain engineer-subject combination did not happen, so it was an imbalanced design with 180 measurements only. 
