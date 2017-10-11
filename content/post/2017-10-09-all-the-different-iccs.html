@@ -12,7 +12,7 @@ draft: true
 
 
 <p>I recently came across <a href=//www.aliquote.org/cours/2012_biomed/biblio/Shrout1979.pdf target="_blank">Shrout and Fleiss (1979)</a> which described 6 different kinds of Intra-Class-Correlation (ICC): ICC(1), ICC(2), ICC(3), ICC(1,k), ICC(2,k), ICC(3,k).<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
-<p>Turns out, the <code>pysch</code> package has the function <code>ICC</code> which calculates all this for you. It even gives you p-value and lower/upper boud. Pretty handy (if you know what you are doing).</p>
+<p>Turns out, the <code>psych</code> package has the function <code>ICC</code> which calculates all this for you. It even gives you p-value and lower/upper bound. Pretty handy (if you know what you are doing).</p>
 <pre class="r"><code>&gt; ## their demo. see ?psych::ICC
 &gt; library(psych)
 &gt; sf &lt;- matrix(c(9,    2,   5,    8,

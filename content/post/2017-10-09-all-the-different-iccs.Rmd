@@ -14,9 +14,7 @@ knitr::opts_chunk$set(warning=FALSE,message=FALSE,collapse=TRUE,echo=TRUE,prompt
 ```
 I recently came across <a href=//www.aliquote.org/cours/2012_biomed/biblio/Shrout1979.pdf target="_blank">Shrout and Fleiss (1979)</a> which described 6 different kinds of Intra-Class-Correlation (ICC): ICC(1), ICC(2), ICC(3), ICC(1,k), ICC(2,k), ICC(3,k).^[this naming is as ~~un~~informative as the type-X ANOVA naming-- if you have been working with this, you will know it by heart. But for others, it doesn\'t really mean much.]
 
-[Shrout and Fleiss (1979)]:http://
-
-Turns out, the `pysch` package has the function `ICC` which calculates all this for you.  It even gives you p-value and lower/upper boud. Pretty handy (if you know what you are doing).
+Turns out, the `psych` package has the function `ICC` which calculates all this for you.  It even gives you p-value and lower/upper bound. Pretty handy (if you know what you are doing).
 
 ```{r psych, message=FALSE,warning=FALSE,cache=T}
 ## their demo. see ?psych::ICC
