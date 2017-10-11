@@ -112,6 +112,10 @@
         <a href="//space.bilibili.com/{{ .Site.Params.bilibili }}" title="Bilibili" target="_blank"><span class="icon icon-bilibili"></span></a>
       </li>{{ end }}
 
+      {{ if isset .Site.Params "researchgate" }}<li class="social-item">
+        <a href="//www.researchgate.net/profile/{{ .Site.Params.researchgate }}" title="Research Gate" target="_blank"><span class="ai ai-researchgate-square"></span></a>
+      </li>{{ end }}
+      
       <li class="social-item">
         <a href="/index.xml"><span class="icon icon-rss" title="RSS" target="_blank"></span></a>
       </li>
