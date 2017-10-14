@@ -6,7 +6,6 @@ slug: all-the-different-iccs
 description: How many types of ICC do you know? I tried to re-derive all of them from the estimated variance components of a linear mixed model.
 categories: []
 tags: []
-draft: true
 ---
 
 ```{r,include=FALSE}
@@ -213,7 +212,7 @@ psych::ICC(sf_imb) ## fails
 ```
 
 
-There is an argument `missing=FALSE` in `psych::ICC`, but if you inspect the inner code, the `aov` function will warning against an unbalanced design.
+There is an argument `missing=FALSE` in `psych::ICC`, but if you inspect the inner code, the `aov` function will warn against an unbalanced design.
 
 ```{r,message=FALSE,warning=FALSE,cache=T,eval=FALSE,include=FALSE}
 psych::ICC(sf_imb,missing=FALSE) 

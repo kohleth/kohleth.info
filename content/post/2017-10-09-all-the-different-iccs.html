@@ -6,7 +6,6 @@ slug: all-the-different-iccs
 description: How many types of ICC do you know? I tried to re-derive all of them from the estimated variance components of a linear mixed model.
 categories: []
 tags: []
-draft: true
 ---
 
 
@@ -215,7 +214,7 @@ corr(s_{i.},s_{i.&#39;})=\frac{\sigma^2_{subject}}{\sigma^2_{subject}+\sigma^2_e
 <pre class="r"><code>&gt; psych::ICC(sf_imb) ## fails
 ## Error in psych::ICC(sf_imb): missing data were found for 1 cases 
 ##  Try again with na.omit  or set missing= FALSE and proceed at your own risk.</code></pre>
-<p>There is an argument <code>missing=FALSE</code> in <code>psych::ICC</code>, but if you inspect the inner code, the <code>aov</code> function will warning against an unbalanced design.</p>
+<p>There is an argument <code>missing=FALSE</code> in <code>psych::ICC</code>, but if you inspect the inner code, the <code>aov</code> function will warn against an unbalanced design.</p>
 <p>But <code>ICC_lmm</code> will work as usual.</p>
 <pre class="r"><code>&gt; sfDF_imb=sfDF%&gt;%filter(!(subject==&quot;S3&quot;&amp;judge==&quot;J3&quot;))
 &gt; ICC_lmm(sfDF_imb) 
