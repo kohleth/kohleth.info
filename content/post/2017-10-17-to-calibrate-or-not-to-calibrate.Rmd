@@ -1,0 +1,56 @@
+---
+title: To calibrate or not to calibrate...
+author: Kohleth Chia
+date: '2017-10-17'
+slug: to-calibrate-or-not-to-calibrate
+categories: []
+tags: []
+draft: true
+---
+
+```{r,include=FALSE}
+knitr::opts_knit$set(echo=TRUE,message=FALSE,warning=FALSE)
+```
+
+Sometimes, when we train a classification model, we would also calibrate the predicted probability, which amounts to training a second model which takes the predicted probability from the first model as input and try to re-predict the actual class. This extra step seems to help a bit when the first model does not have a natural probabilistic model (e.g. random forest, as opposed to, say, glmnet).
+
+Below is an illustration
+
+
+```{r,cache=T}
+library(caret)
+library(dplyr)
+
+## generate some random dataset with 2 classes.
+set.seed(123)
+X=twoClassSim(n=300,noiseVars = 5)
+X.train=X[1:100,]
+X.test=X[101:200,]
+X.test2=X[201:300,]
+Brier=function(data,lev=NULL,model=NULL){
+  c("Brier"=runif(1))
+}
+
+## our first model -- a ranfom forest.
+rf=train(Class~.,data=X.train,method="rf",metric="Brier",maximize=FALSE,
+         trControl=trainControl(summaryFunction=Brier),
+         tuneGrid=data.frame(mtry=2))
+
+## get prediction on validation set.
+pred=predict(rf,newdata=X.test,type="prob")
+pred$obs=X.test$Class
+calib=calibration(obs~Class2,data=pred,class = "Class2")
+xyplot(calib,auto.key=list(columns=2))
+
+## our calibration model, a simply logistic regression.
+glm=glm(obs~Class2,data=pred,family="binomial")
+
+
+pred2=predict(rf,newdata=X.test2,type="prob")
+pred2$obs=X.test2$Class
+calib.pred=predict(glm,newdata=pred2,type="response")
+pred2$calib.Class2=calib.pred
+calib2=calibration(obs~Class2+calib.Class2,data=pred2,class="Class2",cuts=7)
+xyplot(calib2,auto.key=list(columns=2))
+
+```
