@@ -1,0 +1,79 @@
+---
+title: To calibrate or not to calibrate...
+author: Kohleth Chia
+date: '2017-10-17'
+slug: to-calibrate-or-not-to-calibrate
+categories: []
+tags: []
+draft: false
+cover: /post_imgs/prCalib.png
+---
+
+
+
+<p>Sometimes, when we train a classification model, we would also calibrate the predicted probability, which amounts to training a second model which takes the predicted probability from the first model as input and try to re-predict the actual class. This extra step seems to help a bit when the first model does not have a natural probabilistic model (e.g. random forest, as opposed to, say, glmnet).</p>
+<p>Below is an illustration.</p>
+<pre class="r"><code>library(caret)
+library(dplyr)
+
+## generate some random dataset with 2 classes.
+set.seed(123)
+X=twoClassSim(n=300,noiseVars = 5)
+X.train=X[1:100,]
+X.test=X[101:200,]
+X.test2=X[201:300,]
+
+
+## our first model -- a ranfom forest.
+rf=train(Class~.,data=X.train,method=&quot;rf&quot;,tuneGrid=data.frame(mtry=2))
+
+## get prediction on validation set.
+pred=predict(rf,newdata=X.test,type=&quot;prob&quot;)
+## form and plot calibration dataset.
+pred$obs=X.test$Class
+calib=calibration(obs~Class2,data=pred,class = &quot;Class2&quot;,cuts=7)
+xyplot(calib,auto.key=list(columns=2))</code></pre>
+<p><img src="/post/2017-10-17-to-calibrate-or-not-to-calibrate_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>The above is a calibration plot. The horizontal axis is the predicted probability (times 100) of the random forest and the vertical axis is the actual percentage of observations belonging to the predicted class. If the predicted probability is accurate, the line should be the 1:1 line.</p>
+<p>But we can see that random forest tends to be ‘conservative’ in that it clusters its predicted probability around the center (50).</p>
+<p>A simple calibration model that is often used with this type of model is a simple logistic function.</p>
+<pre class="r"><code>## our calibration model, a simply logistic regression.
+glm=glm(obs~Class2,data=pred,family=&quot;binomial&quot;)
+
+## form and plot calibration dataset with predictions from the calibrated model.
+pred2=predict(rf,newdata=X.test2,type=&quot;prob&quot;)
+pred2$obs=X.test2$Class
+calib.pred=predict(glm,newdata=pred2,type=&quot;response&quot;)
+pred2$calib.Class2=calib.pred
+calib2=calibration(obs~Class2+calib.Class2,data=pred2,class=&quot;Class2&quot;,cuts=7)
+xyplot(calib2,auto.key=list(columns=2))</code></pre>
+<p><img src="/post/2017-10-17-to-calibrate-or-not-to-calibrate_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Now we can see that the calibrated predicted probability lies a bit closer to the 1:1 line. We can even calculate the Brier score on the validation set.</p>
+<pre class="r"><code>pred2%&gt;%
+  mutate(obs_num=as.numeric(obs)-1)%&gt;%
+  summarize(Brier_rf=mean((obs_num-Class2)^2),
+         Brier_calib=mean((obs_num-calib.Class2)^2))</code></pre>
+<pre><code>##    Brier_rf Brier_calib
+## 1 0.1981825    0.170759</code></pre>
+<p>And indeed the calibrated probability is better.</p>
+<div id="but." class="section level2">
+<h2>But….</h2>
+<p>There are some down side to this. In decreasing order of importance,</p>
+<div id="if-the-original-model-is-conservative-i-would-like-to-keep-it-that-way" class="section level4">
+<h4>1. If the original model is conservative, I would like to keep it that way</h4>
+<p>If you care about predicted probability instead of predicted class, chances are, the prediction is meant to be viewed by a human user. And if that is the case, then there is also a good chance that the final decision maker (classifier) is actually the human, not the machine. And if that is the case, then I would personally like to keep the machine’s prediction conservative, i.e. cluster around 50%. Because, the last thing I want is for my machine to be so confident about a prediction which turns out to be wrong.</p>
+<p>Of course, not all models are conservative by nature. In this example, if we replaced the random forest by a naive bayes <code>nb=train(Class~.,data=X.train,method=&quot;nb&quot;,trControl = trainControl(classProbs =  TRUE))</code>, we will get an anti-conservative predicted probability.</p>
+</div>
+<div id="it-further-complicates-the-interpretation-of-the-model" class="section level4">
+<h4>2. It further complicates the interpretation of the model</h4>
+<p>One black-box is bad enough if the prediction needs to be interpretable, which, again, is likely the case if the prediction is meant for a human user. So two layers is just worse. And this is regardless of the complexity of the calibration model. It can be a simple logistic regression, and it will still the reduce the interpretability of the original model (because the final prediction comes from another model).</p>
+</div>
+<div id="it-makes-the-implementation-more-complicated" class="section level4">
+<h4>3. It makes the implementation more complicated</h4>
+<p>Because now instead of one model, we have two. Just imagine all the extra coding, testing, and debugging effort that is required.</p>
+</div>
+</div>
+<div id="at-the-end-of-the-day" class="section level2">
+<h2>At the end of the day …</h2>
+<p>I think when the model is just there to assist, instead of actually making the decision, good accuracy and other predictive performance cease to be the only goal. The ultimate assessment should be, ‘how useful is this model to the human?’ Of course, producing accurate prediction is a huge part of it, but it is not the only part.</p>
+</div>
