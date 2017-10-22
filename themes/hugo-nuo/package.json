@@ -7,11 +7,12 @@
     "dev": "rollup -c -w",
     "build": "rollup -c",
     "sass": "sass --scss --style compressed --watch ./src/styles/main.scss:./static/css/bundle.css",
-    "fonts": "cpx './src/fonts/**/*.{svg,ttf,otf,woff,woff2,eot}' ./static/fonts --verbose",
-    "images": "cpx './src/images/**/*.{png,gif,jpg,ico,svg,webp}' ./static/img --verbose",
+    "fonts": "cp -v ./src/fonts/*.{svg,ttf,otf,woff,woff2,eot} ./static/fonts",
+    "images": "cp -v ./src/images/*.{png,gif,jpg,ico,svg,webp} ./static/img",
     "eslint": "eslint --cache --fix index.js src/scripts",
     "stylelint": "stylelint ./src/styles/**/*.scss",
-    "imagemin": "open -a ImageOptim ./src/images"
+    "imagemin": "open -a ImageOptim ./src/images",
+    "imageminpost": "open -a ImageOptim ../../content/post_imgs"
   },
   "repository": {
     "type": "git",
