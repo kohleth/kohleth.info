@@ -2,9 +2,11 @@
 title: The real salary of health and non-profit employee
 author: Kohleth Chia
 date: '2017-09-26'
+categories:
+  - r
+tags:
+  - shiny
 slug: the-real-salary-of-health-and-non-profit-employee
-categories: []
-tags: []
 ---
 
 
@@ -39,7 +41,7 @@ To answer this I wrote a little R program:
   }
 ```
 
-The `tax` function calculates the amount of income tax you have to pay if you earn `amount`, then `realPreTaxIncome` calculates your real pre-tax income. The argument `raw` is the nominal income, and `sp` is the amount of pre-tax income you are packaging. With health professionals, the cap is $9,010, while for charity it is $15,900 (until you incur some FBT).
+The `tax` function calculates the amount of income tax you have to pay if you earn `amount`, then `realPreTaxIncome` calculates your real pre-tax income. The argument `raw` is the nominal income, and `sp` is the amount of pre-tax income you are packaging. With health professionals, the cap is AUD 9,010, while for charity it is AUD 15,900 (until you incur some FBT).
 The last line uses the `optimise` function to solve for your real income. Strictly speaking, it can be solved analytically. But I just thought using a solver is easier to code. There will no doubt be numerical error, but the magnitude will be irrelevantly small.
 
 I have turn this into a little shiny app. Here you go!

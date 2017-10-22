@@ -2,9 +2,9 @@
 title: Apple watch can detect abnormal heart rhythm with 97% accuracy ... or can it?
 author: Kohleth Chia
 date: '2017-09-26'
+categories:
+  - machine learning
 slug: apple-watch-can-detect-abnormal-heart-rhythm-with-97-accuracy-or-can-it
-categories: []
-tags: []
 ---
 
 Earlier this year I came across <a href="//www.macrumors.com/2017/05/11/apple-watch-abnormal-heart-rhythm-detection/" target="_blank" rel="noopener noreferrer">this article</a> which reports a company has developed a deep learning model to predict Abnormal Heart Rhythm (precisely, atrial fibrillation) with 97% Accuracy.

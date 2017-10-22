@@ -2,10 +2,11 @@
 title: To calibrate or not to calibrate...
 author: Kohleth Chia
 date: '2017-10-17'
+categories:
+  - machine learning
+  - r
 slug: to-calibrate-or-not-to-calibrate
-categories: []
-tags: []
-draft: false
+draft: no
 cover: /post_imgs/prCalib.png
 ---
 

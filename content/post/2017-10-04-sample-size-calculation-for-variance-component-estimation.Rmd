@@ -2,9 +2,11 @@
 title: Sample size calculation for variance component estimation
 author: Kohleth Chia
 date: '2017-10-04'
+categories:
+  - r
+tags:
+  - linear mixed model
 slug: sample-size-calculation-for-variance-component-estimation
-categories: []
-tags: []
 cover: /post_imgs/sampleSizeVcomp.png
 ---
 ```{r,include=FALSE}

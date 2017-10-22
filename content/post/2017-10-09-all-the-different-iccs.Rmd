@@ -2,10 +2,13 @@
 title: All the different ICCs
 author: Kohleth Chia
 date: '2017-10-09'
+categories:
+  - r
+tags:
+  - linear mixed model
 slug: all-the-different-iccs
-description: How many types of ICC do you know? I tried to re-derive all of them from the estimated variance components of a linear mixed model.
-categories: []
-tags: []
+description: How many types of ICC do you know? I tried to re-derive all of them from
+  the estimated variance components of a linear mixed model.
 ---
 
 ```{r,include=FALSE}

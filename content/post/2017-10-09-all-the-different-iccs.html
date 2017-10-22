@@ -2,10 +2,13 @@
 title: All the different ICCs
 author: Kohleth Chia
 date: '2017-10-09'
+categories:
+  - r
+tags:
+  - linear mixed model
 slug: all-the-different-iccs
-description: How many types of ICC do you know? I tried to re-derive all of them from the estimated variance components of a linear mixed model.
-categories: []
-tags: []
+description: How many types of ICC do you know? I tried to re-derive all of them from
+  the estimated variance components of a linear mixed model.
 ---
 
 
@@ -192,12 +195,12 @@ corr(s_{i.},s_{i.&#39;})=\frac{\sigma^2_{subject}}{\sigma^2_{subject}+\sigma^2_e
 + }</code></pre>
 <pre class="r"><code>&gt; ICC_lmm(sfDF)
 ##             val      lower     upper
-## ICC1  0.1657418 0.00000000 0.6087766
-## ICC2  0.2897638 0.02947881 0.7744547
-## ICC3  0.7148407 0.23287542 0.9098367
-## ICC1k 0.4427971 0.00000000 0.8615785
-## ICC2k 0.6200505 0.10828340 0.9321334
-## ICC3k 0.9093155 0.54828017 0.9758244</code></pre>
+## ICC1  0.1657418 0.00000000 0.5588167
+## ICC2  0.2897638 0.03171293 0.7170062
+## ICC3  0.7148407 0.20596391 0.9192937
+## ICC1k 0.4427971 0.00000000 0.8351603
+## ICC2k 0.6200505 0.11581608 0.9101849
+## ICC3k 0.9093155 0.50903822 0.9785230</code></pre>
 <p>The point estimate matches with the output of <code>psych::ICC</code> but our intervals are a bit different. This is expected as I <code>psych::ICC</code> uses the F-distribution, whereas in <code>ICC_lmm</code> I used percentile bootstrap C.I.</p>
 <p>One benefit of using a linear mixed model is that it can handle imbalanced design.</p>
 <p>So suppose we delete one observation,</p>
@@ -218,13 +221,13 @@ corr(s_{i.},s_{i.&#39;})=\frac{\sigma^2_{subject}}{\sigma^2_{subject}+\sigma^2_e
 <p>But <code>ICC_lmm</code> will work as usual.</p>
 <pre class="r"><code>&gt; sfDF_imb=sfDF%&gt;%filter(!(subject==&quot;S3&quot;&amp;judge==&quot;J3&quot;))
 &gt; ICC_lmm(sfDF_imb) 
-##             val     lower     upper
-## ICC1  0.1554871 0.0000000 0.5642350
-## ICC2  0.2779546 0.0219589 0.7498647
-## ICC3  0.6975872 0.2125609 0.9264599
-## ICC1k 0.4241152 0.0000000 0.8381528
-## ICC2k 0.6062710 0.0824005 0.9230254
-## ICC3k 0.9022192 0.5191525 0.9805417</code></pre>
+##             val      lower     upper
+## ICC1  0.1554871 0.00000000 0.5496548
+## ICC2  0.2779546 0.01815524 0.6985462
+## ICC3  0.6975872 0.25110148 0.9242155
+## ICC1k 0.4241152 0.00000000 0.8299910
+## ICC2k 0.6062710 0.06886992 0.9026198
+## ICC3k 0.9022192 0.57281359 0.9799120</code></pre>
 </div>
 <div class="footnotes">
 <hr />

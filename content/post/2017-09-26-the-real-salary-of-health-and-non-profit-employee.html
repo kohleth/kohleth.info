@@ -2,9 +2,11 @@
 title: The real salary of health and non-profit employee
 author: Kohleth Chia
 date: '2017-09-26'
+categories:
+  - r
+tags:
+  - shiny
 slug: the-real-salary-of-health-and-non-profit-employee
-categories: []
-tags: []
 ---
 
 
@@ -33,7 +35,7 @@ tags: []
     }
     optimise(f=matchfn,interval=c(raw,raw+sp),tol=1e-5)$min
   }</code></pre>
-<p>The <code>tax</code> function calculates the amount of income tax you have to pay if you earn <code>amount</code>, then <code>realPreTaxIncome</code> calculates your real pre-tax income. The argument <code>raw</code> is the nominal income, and <code>sp</code> is the amount of pre-tax income you are packaging. With health professionals, the cap is $9,010, while for charity it is $15,900 (until you incur some FBT). The last line uses the <code>optimise</code> function to solve for your real income. Strictly speaking, it can be solved analytically. But I just thought using a solver is easier to code. There will no doubt be numerical error, but the magnitude will be irrelevantly small.</p>
+<p>The <code>tax</code> function calculates the amount of income tax you have to pay if you earn <code>amount</code>, then <code>realPreTaxIncome</code> calculates your real pre-tax income. The argument <code>raw</code> is the nominal income, and <code>sp</code> is the amount of pre-tax income you are packaging. With health professionals, the cap is AUD 9,010, while for charity it is AUD 15,900 (until you incur some FBT). The last line uses the <code>optimise</code> function to solve for your real income. Strictly speaking, it can be solved analytically. But I just thought using a solver is easier to code. There will no doubt be numerical error, but the magnitude will be irrelevantly small.</p>
 <p>I have turn this into a little shiny app. Here you go!</p>
 <iframe src="https://kohleth.shinyapps.io/sp_calc/?showcase=0" width="672" height="400px">
 </iframe>

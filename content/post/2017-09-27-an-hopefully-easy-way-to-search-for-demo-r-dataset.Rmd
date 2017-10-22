@@ -1,10 +1,11 @@
 ---
-title: An (hopefully) easy way to find a dummy R dataset for your Stack Overflow / Cross Validated questions
+title: An (hopefully) easy way to find a dummy R dataset for your Stack Overflow /
+  Cross Validated questions
 author: Kohleth Chia
 date: '2017-09-27'
+categories:
+  - r
 slug: an-hopefully-easy-way-to-search-for-demo-r-dataset
-categories: []
-tags: []
 ---
 
 Have you ever wanted to ask an R question on stack overflow or Cross Validated, then realized you better provide a reproducible example? But of course you don't want to (or it is too much hassle to) publish your real dataset, so naturally you need to find a stock dataset that has the same features as the one you are using.

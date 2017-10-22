@@ -2,6 +2,8 @@
 title: Things I learnt developing production grade R projects
 author: Kohleth Chia
 date: '2017-10-20'
+categories:
+  - r
 slug: things-i-learnt-developing-production-grade-r-projects
 draft: yes
 ---
