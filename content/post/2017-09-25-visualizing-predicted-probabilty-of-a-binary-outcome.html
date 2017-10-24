@@ -48,14 +48,41 @@ X%&gt;%select(id,prob)</code></pre>
 <div id="alternative" class="section level2">
 <h2>Alternative</h2>
 <p>I think both issues will go away if we also plot the predicted probability of the complementary class (i.e. the negative case).</p>
-<pre class="r"><code>X%&gt;%
+<pre class="r"><code>X2=X%&gt;%
   mutate(Setosa=prob,
          `Not Setosa`=1-prob)%&gt;%
   tidyr::gather(outcome,p,Setosa, `Not Setosa`)%&gt;%
+  group_by(id)%&gt;%
+  mutate(pos=cumsum(p)-p/2,
+         label=sprintf(&quot;%0.0f%%&quot;,p*100))
+
+X2%&gt;%
   ggplot(aes(x=id,y=p,fill=outcome))+
   geom_col()+coord_flip()+
   theme(axis.title.y = element_text(angle=0))</code></pre>
 <p><img src="/post/2017-09-25-visualizing-predicted-probabilty-of-a-binary-outcome_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 <p>And of course it will be even better if we annotate the graph. <img src="/post/2017-09-25-visualizing-predicted-probabilty-of-a-binary-outcome_files/figure-html/unnamed-chunk-4-1.png" width="672" /> Now it is a lot more clearer that the top row is quite uncertain, while the bottom two are quite certain in their own prediction.</p>
 <p>And <a href="//projects.fivethirtyeight.com/2016-election-forecast/" target="_blank">this</a> would be a great example of such plot.</p>
+<div id="update-24-10-2017" class="section level4">
+<h4>update 24-10-2017</h4>
+<p>Instead of a stacked barchart, the usual side-by-side bar chart also works.</p>
+<pre class="r"><code>X2%&gt;%
+  ggplot(aes(x=outcome,y=p,fill=outcome,label=label))+
+  geom_col(position=&quot;dodge&quot;)+
+  facet_wrap(~id)+
+  geom_text(nudge_y=0.1)+
+  theme(axis.title.y = element_text(angle=0))</code></pre>
+<p><img src="/post/2017-09-25-visualizing-predicted-probabilty-of-a-binary-outcome_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Or even a pie chart (yes, a pie chart).</p>
+<pre class="r"><code>X2%&gt;%
+  ggplot(aes(x=&quot;&quot;,y=p,fill=outcome,label=label))+
+  geom_bar(width=1,stat=&quot;identity&quot;)+
+  geom_text(aes(y=pos))+
+  coord_polar(&quot;y&quot;)+
+  facet_wrap(~id)+
+  ylab(&quot;&quot;)+
+  xlab(&quot;&quot;)+
+  theme(axis.text.x=element_blank())</code></pre>
+<p><img src="/post/2017-09-25-visualizing-predicted-probabilty-of-a-binary-outcome_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+</div>
 </div>
