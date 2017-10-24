@@ -47,10 +47,15 @@ This plot looks innocent enough. But then I realize there are 2 things that coul
 I think both issues will go away if we also plot the predicted probability of the complementary class (i.e. the negative case). 
 
 ```{r, message=FALSE, warning=FALSE,fig.height=2}
-X%>%
+X2=X%>%
   mutate(Setosa=prob,
          `Not Setosa`=1-prob)%>%
   tidyr::gather(outcome,p,Setosa, `Not Setosa`)%>%
+  group_by(id)%>%
+  mutate(pos=cumsum(p)-p/2,
+         label=sprintf("%0.0f%%",p*100))
+
+X2%>%
   ggplot(aes(x=id,y=p,fill=outcome))+
   geom_col()+coord_flip()+
   theme(axis.title.y = element_text(angle=0))
@@ -58,15 +63,38 @@ X%>%
 
 And of course it will be even better if we annotate the graph.
 ```{r, message=FALSE, warning=FALSE,echo=FALSE,fig.height=2}
-X%>%
-  mutate(Setosa=prob,
-         `Not Setosa`=1-prob)%>%
-  tidyr::gather(outcome,p,Setosa, `Not Setosa`)%>%
-  mutate(ny=ifelse(outcome=="Setosa",p-0.05,(1-p)+0.05))%>%
-  ggplot(aes(x=id,y=p,fill=outcome,label=paste0(round(p*100),"%")))+geom_col()+
-  coord_flip()+geom_text(aes(y=ny))+
+X2%>%
+  ggplot(aes(x=id,y=p,fill=outcome,label=label))+
+  geom_col()+
+  coord_flip()+geom_text(aes(y=pos))+
   theme(axis.title.y = element_text(angle=0))
 ```
 Now it is a lot more clearer that the top row is quite uncertain, while the bottom two are quite certain in their own prediction.
 
 And <a href="//projects.fivethirtyeight.com/2016-election-forecast/" target="_blank">this</a> would be a great example of such plot.
+
+#### update 24-10-2017
+
+Instead of a stacked barchart, the usual side-by-side bar chart also works.
+
+```{r,fig.height=3}
+X2%>%
+  ggplot(aes(x=outcome,y=p,fill=outcome,label=label))+
+  geom_col(position="dodge")+
+  facet_wrap(~id)+
+  geom_text(nudge_y=0.1)+
+  theme(axis.title.y = element_text(angle=0))
+```
+
+Or even a pie chart (yes, a pie chart).
+```{r,fig.height=3}
+X2%>%
+  ggplot(aes(x="",y=p,fill=outcome,label=label))+
+  geom_bar(width=1,stat="identity")+
+  geom_text(aes(y=pos))+
+  coord_polar("y")+
+  facet_wrap(~id)+
+  ylab("")+
+  xlab("")+
+  theme(axis.text.x=element_blank())
+```
