@@ -9,7 +9,7 @@ tags:
   - shiny
 ---
 
-Shiny has introduced the concept of <a href="//shiny.rstudio.com/articles/modules.html" target="_blank">modules</a> which lets you break up your complex shiny code into small, isolated (self-contained), re-usable chunk.
+Shiny has introduced the concept of <a href="//shiny.rstudio.com/articles/modules.html" target="_blank">modules</a> which lets you break up complex shiny code into small, isolated (self-contained), re-usable chunk.
 
 The idea is great but the implementation can be a bit different to learn. One issue that I had earlier is how to, from a first module, which is a renderUI object, return a reactive value which is then fed as input into another renderUI object.
 
