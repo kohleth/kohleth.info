@@ -20,6 +20,8 @@ Below is a simple example. First, there is a selectize list. Once you have selec
 ```
 library(shiny)
 
+## define modules -------------------------------
+
 myselectInput=function(id){
   ns=NS(id)
   uiOutput(ns("selectize"))
@@ -55,13 +57,14 @@ myradio=function(input,output,session,.type){
   return(reactive(input$plant))
 }
 
+## main Shiny files-------------------------
+
 ui <- fluidPage(
   myselectInput("demo"),
   myradioInput("demo"),
   plotOutput("plot")
 )
 
-# Define server logic required to draw a histogram
 server <- function(input, output, session) { 
   type=callModule(myselect,"demo")
   plant=callModule(myradio,"demo",type)
